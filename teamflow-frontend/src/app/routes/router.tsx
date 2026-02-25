@@ -2,7 +2,9 @@ import { createBrowserRouter } from "react-router-dom"
 
 import { AppShell } from "@/app/layout/AppShell"
 import { ProtectedRoute } from "@/app/routes/ProtectedRoute"
+import { HomePage } from "@/features/auth/pages/HomePage"
 import { LoginPage } from "@/features/auth/pages/LoginPage"
+import { ProfilePage } from "@/features/auth/pages/ProfilePage"
 import { RegisterPage } from "@/features/auth/pages/RegisterPage"
 import { VerifyPage } from "@/features/auth/pages/VerifyPage"
 
@@ -15,8 +17,11 @@ export const router = createBrowserRouter([
     element: <ProtectedRoute />,
     children: [
       {
-        path: "/",
         element: <AppShell />,
+        children: [
+          { path: "/", element: <HomePage /> },
+          { path: "/profile", element: <ProfilePage /> },
+        ],
       },
     ],
   },
