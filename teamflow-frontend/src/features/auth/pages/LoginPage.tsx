@@ -44,7 +44,7 @@ export function LoginPage() {
         const detail: string | undefined = data?.detail
 
         if (status === 400 && detail === "Invalid credentials.") {
-          toast.error("Invalid email or password")
+          toast.error("Invalid email or password.")
           return
         }
 
