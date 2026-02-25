@@ -1,3 +1,5 @@
+import { Toaster } from "sonner"
+
 import React from "react"
 
 import ReactDOM from "react-dom/client"
@@ -9,7 +11,6 @@ import { AuthProvider } from "@/features/auth/model/AuthContext"
 import { setNavigate } from "@/shared/lib/navigation"
 
 import "./index.css"
-import { Toaster } from "sonner"
 
 setNavigate((to) => router.navigate(to))
 

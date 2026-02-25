@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
+import axios from "axios"
 import { toast } from "sonner"
 import { z } from "zod"
 
@@ -10,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { verifyEmailRequest } from "@/features/auth/api/verifyEmail"
+import { getProblemDetail } from "@/shared/api/problemDetails"
 
 const schema = z.object({
   token: z.string().min(1, "Token is required"),
@@ -33,8 +35,42 @@ export function VerifyPage() {
       toast.success("Email verified. You can now log in.")
       navigate("/login", { replace: true })
     },
-    onError: () => {
-      toast.error("Verification failed. Check the token.")
+    onError: (error) => {
+      form.clearErrors()
+
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status
+        const pd = getProblemDetail(error.response?.data)
+        const detail = pd?.detail
+
+        if (status === 404 && detail === "Verification token is invalid.") {
+          form.setError("token", { type: "server", message: "Token is invalid" })
+          return
+        }
+
+        if (status === 400 && detail === "Verification token is invalid.") {
+          form.setError("token", { type: "server", message: "Token is invalid" })
+          return
+        }
+
+        if (status === 400 && detail === "Verification token has expired.") {
+          form.setError("token", {
+            type: "server",
+            message: "Token has expired. Please register again.",
+          })
+          return
+        }
+
+        if (status === 409 && detail === "User is not in PENDING status.") {
+          toast.message("This account is not pending verification.")
+          return
+        }
+
+        toast.error("Verification failed", { description: detail ?? `Status: ${status}` })
+        return
+      }
+
+      toast.error("Verification failed.")
     },
   })
 

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { registerRequest } from "@/features/auth/api/register"
+import { getProblemDetail } from "@/shared/api/problemDetails"
 
 const usernameRegex = /^[a-z0-9._-]{3,50}$/
 
@@ -45,12 +46,12 @@ export function RegisterPage() {
 
       if (axios.isAxiosError(error)) {
         const status = error.response?.status
-        const data = error.response?.data as any
-        const detail: string | undefined = data?.detail
+        const pd = getProblemDetail(error.response?.data)
+        const detail = pd?.detail
 
         if (status === 409 && detail === "Email is already taken.") {
           form.setError("email", { type: "server", message: "Email is already taken." })
-          return;
+          return
         }
 
         if (status === 409 && detail === "Username is already taken.") {

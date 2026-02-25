@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { loginRequest } from "@/features/auth/api/login"
 import { useAuth } from "@/features/auth/model/AuthContext"
+import { getProblemDetail } from "@/shared/api/problemDetails"
 
 const schema = z.object({
   email: z.email("Enter a valid email"),
@@ -40,8 +41,8 @@ export function LoginPage() {
     onError: (error) => {
       if (axios.isAxiosError(error)) {
         const status = error.response?.status
-        const data = error.response?.data as any
-        const detail: string | undefined = data?.detail
+        const pd = getProblemDetail(error.response?.data)
+        const detail = pd?.detail
 
         if (status === 400 && detail === "Invalid credentials.") {
           toast.error("Invalid email or password.")
