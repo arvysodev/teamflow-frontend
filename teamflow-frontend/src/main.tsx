@@ -9,6 +9,7 @@ import { AuthProvider } from "@/features/auth/model/AuthContext"
 import { setNavigate } from "@/shared/lib/navigation"
 
 import "./index.css"
+import { Toaster } from "sonner"
 
 setNavigate((to) => router.navigate(to))
 
@@ -16,6 +17,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <AuthProvider>
       <QueryProvider>
+        <Toaster />
         <RouterProvider router={router} />
       </QueryProvider>
     </AuthProvider>

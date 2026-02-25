@@ -40,7 +40,13 @@ export function LoginPage() {
     onError: (error) => {
       if (axios.isAxiosError(error)) {
         const status = error.response?.status
-        const detail = (error.response?.data as any)?.detail
+        const data = error.response?.data as any
+        const detail: string | undefined = data?.detail
+
+        if (status === 400 && detail === "Invalid credentials.") {
+          toast.error("Invalid email or password")
+          return
+        }
 
         if (status === 409 && detail === "Email is not verified.") {
           const email = form.getValues("email")
@@ -49,11 +55,16 @@ export function LoginPage() {
           return
         }
 
+        if (status === 409 && detail === "User is disabled.") {
+          toast.error("User is disabled.")
+          return
+        }
+
         toast.error("Login failed. Check email/password.")
         return
       }
 
-      toast.error("Login failed. Check email/password.")
+      toast.error("Login failed.")
     },
   })
 

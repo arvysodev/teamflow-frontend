@@ -4,7 +4,6 @@ import { Link } from "react-router-dom"
 import { useNavigate } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
-import { Toaster } from "@/components/ui/sonner"
 import { useAuth } from "@/features/auth/model/AuthContext"
 
 export function AppShell() {
@@ -20,7 +19,6 @@ export function AppShell() {
 
   return (
     <div className="min-h-screen p-6">
-      <Toaster />
       <div className="mx-auto max-w-4xl space-y-4">
         <header className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">TeamFlow</h1>
