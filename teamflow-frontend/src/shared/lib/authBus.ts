@@ -1,9 +1,9 @@
-type LogoutListener = () => void;
+type LogoutListener = () => void
 
-const logoutListeners = new Set<LogoutListener>();
+const logoutListeners = new Set<LogoutListener>()
 
 export function emitLogout() {
-  for (const fn of logoutListeners) fn();
+  for (const fn of logoutListeners) fn()
 }
 
 export function onLogout(listener: LogoutListener) {

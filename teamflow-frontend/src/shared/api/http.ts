@@ -25,14 +25,14 @@ http.interceptors.request.use((config) => {
 http.interceptors.response.use(
   (res) => res,
   (error) => {
-    const status = error?.response?.status;
+    const status = error?.response?.status
 
     if (status === 401) {
-      clearAccessToken();
-      emitLogout();
-      navigate("/login");
+      clearAccessToken()
+      emitLogout()
+      navigate("/login")
     }
 
-    return Promise.reject(error);
-  }
-);
+    return Promise.reject(error)
+  },
+)
