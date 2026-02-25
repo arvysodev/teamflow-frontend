@@ -1,6 +1,7 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { type PropsWithChildren, useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
+
+import { type PropsWithChildren, useState } from "react"
 
 export function QueryProvider({ children }: PropsWithChildren) {
   const [client] = useState(
@@ -16,12 +17,12 @@ export function QueryProvider({ children }: PropsWithChildren) {
           },
         },
       }),
-  );
+  )
 
   return (
     <QueryClientProvider client={client}>
       {children}
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
-  );
+  )
 }

@@ -1,10 +1,10 @@
-import { createBrowserRouter } from "react-router-dom";
-import { ProtectedRoute } from "@/app/routes/ProtectedRoute";
-import { AppShell } from "@/app/layout/AppShell";
+import { createBrowserRouter } from "react-router-dom"
 
-import { LoginPage } from "@/features/auth/pages/LoginPage";
-import { RegisterPage } from "@/features/auth/pages/RegisterPage";
-import { VerifyPage } from "@/features/auth/pages/VerifyPage";
+import { AppShell } from "@/app/layout/AppShell"
+import { ProtectedRoute } from "@/app/routes/ProtectedRoute"
+import { LoginPage } from "@/features/auth/pages/LoginPage"
+import { RegisterPage } from "@/features/auth/pages/RegisterPage"
+import { VerifyPage } from "@/features/auth/pages/VerifyPage"
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -20,4 +20,4 @@ export const router = createBrowserRouter([
       },
     ],
   },
-]);
+])

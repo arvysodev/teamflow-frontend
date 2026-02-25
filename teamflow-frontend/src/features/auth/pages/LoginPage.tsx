@@ -1,45 +1,45 @@
-import { useMutation } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useMutation } from "@tanstack/react-query"
+import { toast } from "sonner"
+import { z } from "zod"
 
-import { loginRequest } from "@/features/auth/api/login";
-import { useAuth } from "@/features/auth/model/AuthContext";
+import { useForm } from "react-hook-form"
+import { Link, useNavigate } from "react-router-dom"
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { loginRequest } from "@/features/auth/api/login"
+import { useAuth } from "@/features/auth/model/AuthContext"
 
 const schema = z.object({
   email: z.email("Enter a valid email"),
   password: z.string().min(1, "Password is required"),
-});
+})
 
-type FormValues = z.infer<typeof schema>;
+type FormValues = z.infer<typeof schema>
 
 export function LoginPage() {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { email: "", password: "" },
-  });
+  })
 
-  const { login } = useAuth();
+  const { login } = useAuth()
 
   const mutation = useMutation({
     mutationFn: loginRequest,
     onSuccess: (data) => {
-      login(data.accessToken);
-      toast.success("Logged in");
-      navigate("/", { replace: true });
+      login(data.accessToken)
+      toast.success("Logged in")
+      navigate("/", { replace: true })
     },
     onError: () => {
-      toast.error("Login failed. Check email/password.");
+      toast.error("Login failed. Check email/password.")
     },
-  });
+  })
 
   return (
     <div className="min-h-screen p-6">
@@ -91,5 +91,5 @@ export function LoginPage() {
         </Card>
       </div>
     </div>
-  );
+  )
 }
