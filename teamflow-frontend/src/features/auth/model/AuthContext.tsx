@@ -1,5 +1,7 @@
 import { type PropsWithChildren, createContext, useContext, useState } from "react"
+import { useEffect } from "react"
 
+import { onLogout } from "@/shared/lib/authBus"
 import { clearAccessToken, getAccessToken, setAccessToken } from "@/shared/lib/token"
 
 type AuthContextValue = {
@@ -12,6 +14,12 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [isAuthenticated, setIsAuthenticated] = useState(!!getAccessToken())
+
+  useEffect(() => {
+    return onLogout(() => {
+      setIsAuthenticated(false)
+    })
+  }, [])
 
   function login(token: string) {
     setAccessToken(token)
