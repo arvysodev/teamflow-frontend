@@ -1,7 +1,19 @@
 import { Link } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { clearAccessToken } from "@/shared/lib/token";
+import { Button } from "@/components/ui/button";
 
 export function AppShell() {
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    clearAccessToken();
+    toast.message("Logged out");
+    navigate("/login", { replace: true })
+  }
+
   return (
     <div className="min-h-screen p-6">
       <Toaster />
@@ -13,6 +25,10 @@ export function AppShell() {
             <Link to="/register">Register</Link>
             <Link to="/verify">Verify</Link>
           </nav>
+
+          <Button variant="outline" size="sm" onClick={handleLogout}>
+            Logout
+          </Button>
         </header>
 
         <main className="rounded-lg border p-6">
