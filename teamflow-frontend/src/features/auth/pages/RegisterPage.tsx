@@ -78,9 +78,7 @@ export function RegisterPage() {
                 <label className="text-sm">Email</label>
                 <Input type="email" autoComplete="email" {...form.register("email")} />
                 {form.formState.errors.email && (
-                  <p className="text-sm text-destructive">
-                    {form.formState.errors.email.message}
-                  </p>
+                  <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
                 )}
               </div>
 

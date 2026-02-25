@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
+import axios from "axios"
 import { toast } from "sonner"
 import { z } from "zod"
 
@@ -36,7 +37,22 @@ export function LoginPage() {
       toast.success("Logged in")
       navigate("/", { replace: true })
     },
-    onError: () => {
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status
+        const detail = (error.response?.data as any)?.detail
+
+        if (status === 409 && detail === "Email is not verified.") {
+          const email = form.getValues("email")
+          toast.message("Please verify your email first.")
+          navigate(`/verify?email=${encodeURIComponent(email)}`, { replace: true })
+          return
+        }
+
+        toast.error("Login failed. Check email/password.")
+        return
+      }
+
       toast.error("Login failed. Check email/password.")
     },
   })
