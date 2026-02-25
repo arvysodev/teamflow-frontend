@@ -27,7 +27,7 @@ export function AppShell() {
 
           <div className="flex items-center gap-3">
             {meQuery.data && (
-              <span className="text-sm text-muted-foreground">Logged in as {meQuery.data.username}</span>
+              <span className="text-sm text-muted-foreground mx-3">Logged in as {meQuery.data.username}</span>
             )}
             <Button variant="outline" size="sm" onClick={handleLogout}>
               Logout
