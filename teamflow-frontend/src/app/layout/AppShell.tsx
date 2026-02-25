@@ -1,17 +1,20 @@
 import { Link } from "react-router-dom";
-import { Toaster } from "@/components/ui/sonner";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { clearAccessToken } from "@/shared/lib/token";
+import { useAuth } from "@/features/auth/model/AuthContext";
+
+import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 
 export function AppShell() {
   const navigate = useNavigate();
 
+  const { logout, isAuthenticated } = useAuth();
+
   function handleLogout() {
-    clearAccessToken();
+    logout();
     toast.message("Logged out");
-    navigate("/login", { replace: true })
+    navigate("/login", { replace: true });
   }
 
   return (
@@ -26,9 +29,11 @@ export function AppShell() {
             <Link to="/verify">Verify</Link>
           </nav>
 
-          <Button variant="outline" size="sm" onClick={handleLogout}>
-            Logout
-          </Button>
+          {isAuthenticated && (
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              Logout
+            </Button>
+          )}
         </header>
 
         <main className="rounded-lg border p-6">

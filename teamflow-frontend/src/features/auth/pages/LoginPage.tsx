@@ -5,8 +5,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
-import { login } from "@/features/auth/api/login";
-import { setAccessToken } from "@/shared/lib/token";
+import { loginRequest } from "@/features/auth/api/login";
+import { useAuth } from "@/features/auth/model/AuthContext";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,10 +27,12 @@ export function LoginPage() {
     defaultValues: { email: "", password: "" },
   });
 
+  const { login } = useAuth();
+
   const mutation = useMutation({
-    mutationFn: login,
+    mutationFn: loginRequest,
     onSuccess: (data) => {
-      setAccessToken(data.accessToken);
+      login(data.accessToken);
       toast.success("Logged in");
       navigate("/", { replace: true });
     },
