@@ -5,9 +5,11 @@ import { useNavigate } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/features/auth/model/AuthContext"
+import { useMeQuery } from "@/shared/api/queries"
 
 export function AppShell() {
   const navigate = useNavigate()
+  const meQuery = useMeQuery()
 
   const { logout, isAuthenticated } = useAuth()
 
@@ -24,17 +26,12 @@ export function AppShell() {
           <h1 className="text-2xl font-semibold">TeamFlow</h1>
 
           <div className="flex items-center gap-3">
-            {!isAuthenticated ? (
-              <nav className="flex gap-4 text-sm underline">
-                <Link to="/login">Login</Link>
-                <Link to="/register">Register</Link>
-                <Link to="/verify">Verify</Link>
-              </nav>
-            ) : (
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                Logout
-              </Button>
+            {meQuery.data && (
+              <span className="text-sm text-muted-foreground">Logged in as {meQuery.data.username}</span>
             )}
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              Logout
+            </Button>
           </div>
         </header>
 
