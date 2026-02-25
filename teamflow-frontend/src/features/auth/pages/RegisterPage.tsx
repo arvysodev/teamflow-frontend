@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
+import axios from "axios"
 import { toast } from "sonner"
 import { z } from "zod"
 
@@ -39,7 +40,38 @@ export function RegisterPage() {
       toast.success("Account created. Please verify your email.")
       navigate(`/verify?email=${encodeURIComponent(form.getValues("email"))}`, { replace: true })
     },
-    onError: () => {
+    onError: (error) => {
+      form.clearErrors()
+
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status
+        const data = error.response?.data as any
+        const detail: string | undefined = data?.detail
+
+        if (status === 409 && detail === "Email is already taken.") {
+          form.setError("email", { type: "server", message: "Email is already taken." })
+          return;
+        }
+
+        if (status === 409 && detail === "Username is already taken.") {
+          form.setError("username", { type: "server", message: "Username is already taken" })
+          return
+        }
+
+        if (status === 400) {
+          if (detail) {
+            toast.error("Registration failed", { description: detail })
+            return
+          }
+
+          toast.error("Registration failed. Please check your input.")
+          return
+        }
+
+        toast.error("Registration failed", { description: detail ?? `Status: ${status}` })
+        return
+      }
+
       toast.error("Registration failed.")
     },
   })
