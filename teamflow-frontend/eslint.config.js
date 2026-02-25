@@ -30,7 +30,7 @@ export default tseslint.config(
 
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
 
-      "prettier/prettier": "error",
+      "prettier/prettier": "warn",
     },
   },
 

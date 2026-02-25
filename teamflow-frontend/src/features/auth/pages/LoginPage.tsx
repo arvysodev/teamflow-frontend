@@ -1,3 +1,93 @@
+import { useMutation } from "@tanstack/react-query";
+import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+
+import { login } from "@/features/auth/api/login";
+import { setAccessToken } from "@/shared/lib/token";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+const schema = z.object({
+  email: z.email("Enter a valid email"),
+  password: z.string().min(1, "Password is required"),
+});
+
+type FormValues = z.infer<typeof schema>;
+
 export function LoginPage() {
-  return <div className="min-h-screen p-6">Login page (next)</div>;
+  const navigate = useNavigate();
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: { email: "", password: "" },
+  });
+
+  const mutation = useMutation({
+    mutationFn: login,
+    onSuccess: (data) => {
+      setAccessToken(data.accessToken);
+      toast.success("Logged in");
+      navigate("/", { replace: true });
+    },
+    onError: () => {
+      toast.error("Login failed. Check email/password.");
+    },
+  });
+
+  return (
+    <div className="min-h-screen p-6">
+      <div className="mx-auto max-w-sm">
+        <Card>
+          <CardHeader>
+            <CardTitle>Login</CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <form
+              className="space-y-4"
+              onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
+            >
+              <div className="space-y-1">
+                <label className="text-sm">Email</label>
+                <Input type="email" autoComplete="email" {...form.register("email")} />
+                {form.formState.errors.email && (
+                  <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm">Password</label>
+                <Input
+                  type="password"
+                  autoComplete="current-password"
+                  {...form.register("password")}
+                />
+                {form.formState.errors.password && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.password.message}
+                  </p>
+                )}
+              </div>
+
+              <Button type="submit" className="w-full" disabled={mutation.isPending}>
+                {mutation.isPending ? "Signing in..." : "Sign in"}
+              </Button>
+
+              <p className="text-sm text-muted-foreground">
+                No account?{" "}
+                <Link className="underline" to="/register">
+                  Register
+                </Link>
+              </p>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 }
