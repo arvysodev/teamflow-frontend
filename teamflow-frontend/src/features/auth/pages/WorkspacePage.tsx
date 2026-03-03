@@ -113,6 +113,7 @@ export function WorkspacePage() {
                 Rename
               </Button>
             </DialogTrigger>
+
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Rename workspace</DialogTitle>
@@ -124,9 +125,10 @@ export function WorkspacePage() {
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="Workspace name"
                 />
+
                 <Button
                   onClick={() => renameMutation.mutate(newName)}
-                  disabled={renameMutation.isPending || newName.trim().length < 3}
+                  disabled={renameMutation.isPending || newName.trim().length === 0}
                 >
                   {renameMutation.isPending ? "Saving…" : "Save"}
                 </Button>

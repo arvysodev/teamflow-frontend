@@ -22,4 +22,10 @@ export type WorkspacesResponse = {
   meta: WorkspacesMeta
 }
 
-export type RenameWorkspaceRequest = { name: string }
+export type RenameWorkspaceRequest = {
+  name: string
+}
+
+export type CreateWorkspaceRequest = {
+  name: string
+}
