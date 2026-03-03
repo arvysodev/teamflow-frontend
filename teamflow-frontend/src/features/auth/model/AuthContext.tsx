@@ -1,6 +1,7 @@
 import { type PropsWithChildren, createContext, useContext, useState } from "react"
 import { useEffect } from "react"
 
+import { queryClient } from "@/app/providers/queryClient"
 import { onLogout } from "@/shared/lib/authBus"
 import { clearAccessToken, getAccessToken, setAccessToken } from "@/shared/lib/token"
 
@@ -29,6 +30,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   function logout() {
     clearAccessToken()
     setIsAuthenticated(false)
+    queryClient.clear()
   }
 
   return (

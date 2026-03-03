@@ -1,5 +1,6 @@
-import type { WorkspacesResponse } from "@/features/workspaces/model/types"
 import { http } from "@/shared/api/http"
+
+import type { WorkspacesResponse } from "./types"
 
 export type GetWorkspacesParams = {
   page?: number

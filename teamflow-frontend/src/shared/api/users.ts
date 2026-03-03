@@ -1,6 +1,6 @@
 import { http } from "@/shared/api/http"
 
-import type { User } from "../types/User"
+import type { User } from "../lib/types"
 
 export async function getMe(): Promise<User> {
   const { data } = await http.get<User>("/api/v1/users/me")
