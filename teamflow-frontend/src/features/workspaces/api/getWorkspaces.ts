@@ -6,7 +6,7 @@ export type GetWorkspacesParams = {
   size?: number
 }
 
-export async function getWorkspaces(params: GetWorkspacesParams = {}) {
+export async function getWorkspaces(params: GetWorkspacesParams = {}): Promise<WorkspacesResponse> {
   const { page = 0, size = 10 } = params
 
   const { data } = await http.get<WorkspacesResponse>("/api/v1/workspaces", {
