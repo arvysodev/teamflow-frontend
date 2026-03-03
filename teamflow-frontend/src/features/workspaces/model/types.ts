@@ -1,4 +1,4 @@
-export type WorkspaceStatus = "ACTIVE" | "ARCHIVED"
+export type WorkspaceStatus = "CLOSED" | "ARCHIVED"
 
 export type Workspace = {
   id: string
@@ -21,3 +21,5 @@ export type WorkspacesResponse = {
   items: Workspace[]
   meta: WorkspacesMeta
 }
+
+export type RenameWorkspaceRequest = { name: string }

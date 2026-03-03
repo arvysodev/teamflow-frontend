@@ -1,14 +1,31 @@
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
 
-import { useParams } from "react-router-dom"
+import { useState } from "react"
 
+import { Link, useNavigate, useParams } from "react-router-dom"
+
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { closeWorkspace } from "@/features/workspaces/api/closeWorkspace"
 import { getWorkspaceById } from "@/features/workspaces/api/getWorkspaceById"
+import { leaveWorkspace } from "@/features/workspaces/api/leaveWorkspace"
+import { renameWorkspace } from "@/features/workspaces/api/renameWorkspace"
+import { restoreWorkspace } from "@/features/workspaces/api/restoreWorkspace"
 import { formatDateTime } from "@/shared/lib/date"
 
 export function WorkspacePage() {
-  const params = useParams()
-  const workspaceId = params.workspaceId
+  const { workspaceId } = useParams()
+  const navigate = useNavigate()
+  const qc = useQueryClient()
 
   if (!workspaceId) {
     return <p className="text-sm text-desctructive">Workspace id is missing.</p>
@@ -17,6 +34,49 @@ export function WorkspacePage() {
   const workspaceQuery = useQuery({
     queryKey: ["workspace", workspaceId],
     queryFn: () => getWorkspaceById(workspaceId),
+  })
+
+  const currentName = workspaceQuery.data?.name ?? ""
+  const [newName, setNewName] = useState("")
+
+  const renameMutation = useMutation({
+    mutationFn: (name: string) => renameWorkspace(workspaceId, { name }),
+    onSuccess: async () => {
+      toast.success("Workspace renamed")
+      await qc.invalidateQueries({ queryKey: ["workspace", workspaceId] })
+      await qc.invalidateQueries({ queryKey: ["workspaces"] })
+    },
+    onError: () => toast.error("Rename failed"),
+  })
+
+  const closeMutation = useMutation({
+    mutationFn: () => closeWorkspace(workspaceId),
+    onSuccess: async () => {
+      toast.message("Workspace closed")
+      await qc.invalidateQueries({ queryKey: ["workspace", workspaceId] })
+      await qc.invalidateQueries({ queryKey: ["workspaces"] })
+    },
+    onError: () => toast.error("Close failed"),
+  })
+
+  const restoreMutation = useMutation({
+    mutationFn: () => restoreWorkspace(workspaceId),
+    onSuccess: async () => {
+      toast.message("Workspace restored")
+      await qc.invalidateQueries({ queryKey: ["workspace", workspaceId] })
+      await qc.invalidateQueries({ queryKey: ["workspaces"] })
+    },
+    onError: () => toast.error("Restore failed"),
+  })
+
+  const leaveMutation = useMutation({
+    mutationFn: () => leaveWorkspace(workspaceId),
+    onSuccess: async () => {
+      toast.message("You left the workspace")
+      await qc.invalidateQueries({ queryKey: ["workspaces"] })
+      navigate("/", { replace: true })
+    },
+    onError: () => toast.error("Leave failed"),
   })
 
   if (workspaceQuery.isPending) {
@@ -28,12 +88,81 @@ export function WorkspacePage() {
   }
 
   const ws = workspaceQuery.data
+  const isClosed = ws.status === "CLOSED" || ws.status === "ARCHIVED"
 
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-2xl font-semibold">{ws.name}</h2>
-        <p className="text-sm text-muted-foreground">{ws.status}</p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h2 className="text-2xl font-semibold truncate">{ws.name}</h2>
+          <p className="text-sm text-muted-foreground">{ws.status}</p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button asChild variant="secondary" size="sm">
+            <Link to="members">Members</Link>
+          </Button>
+
+          <Dialog
+            onOpenChange={(open) => {
+              if (open) setNewName(currentName)
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                Rename
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Rename workspace</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-3">
+                <Input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Workspace name"
+                />
+                <Button
+                  onClick={() => renameMutation.mutate(newName)}
+                  disabled={renameMutation.isPending || newName.trim().length < 3}
+                >
+                  {renameMutation.isPending ? "Saving…" : "Save"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {!isClosed ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => closeMutation.mutate()}
+              disabled={closeMutation.isPending}
+            >
+              {closeMutation.isPending ? "Closing…" : "Close"}
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => restoreMutation.mutate()}
+              disabled={restoreMutation.isPending}
+            >
+              {restoreMutation.isPending ? "Restoring…" : "Restore"}
+            </Button>
+          )}
+
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => leaveMutation.mutate()}
+            disabled={leaveMutation.isPending}
+          >
+            {leaveMutation.isPending ? "Leaving…" : "Leave"}
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -42,10 +171,10 @@ export function WorkspacePage() {
         </CardHeader>
         <CardContent className="space-y-2">
           <p className="text-sm">
-            <span>Created:</span> {formatDateTime(ws.createdAt)}
+            <span className="text-muted-foreground">Created:</span> {formatDateTime(ws.createdAt)}
           </p>
           <p className="text-sm">
-            <span>Updated:</span> {formatDateTime(ws.updatedAt)}
+            <span className="text-muted-foreground">Updated:</span> {formatDateTime(ws.updatedAt)}
           </p>
           <p className="text-sm text-muted-foreground">projects</p>
         </CardContent>

@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query"
 
+import { Link } from "react-router-dom"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getWorkspaces } from "@/features/workspaces/api/getWorkspaces"
 import { formatDateTime } from "@/shared/lib/date"
-import { Link } from "react-router-dom"
 
 export function HomePage() {
   const page = 0
@@ -42,7 +43,7 @@ export function HomePage() {
               {items.map((ws) => (
                 <Link
                   key={ws.id}
-                  className="p-4 flex items-center justify-between hover:bg-muted/50 transition"
+                  className="p-4 flex items-center justify-between hover:bg-muted transition"
                   to={`/workspaces/${ws.id}`}
                 >
                   <div className="min-w-0">
