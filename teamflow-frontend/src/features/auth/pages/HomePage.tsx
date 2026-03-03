@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import axios from "axios"
 import { toast } from "sonner"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { Link, useNavigate } from "react-router-dom"
 
@@ -24,12 +24,16 @@ import type { WorkspaceFilter } from "@/features/workspaces/model/types"
 import { formatDateTime } from "@/shared/lib/date"
 
 export function HomePage() {
-  const page = 0
+  const [page, setPage] = useState(0)
   const size = 10
   const qc = useQueryClient()
   const navigate = useNavigate()
 
   const [statusFilter, setStatusFilter] = useState<WorkspaceFilter>("active")
+
+  useEffect(() => {
+    setPage(0)
+  }, [statusFilter])
 
   const workspacesQuery = useQuery({
     queryKey: ["workspaces", statusFilter, page, size],
@@ -120,6 +124,7 @@ export function HomePage() {
         <CardHeader>
           <CardTitle>Your workspaces</CardTitle>
         </CardHeader>
+
         <CardContent className="space-y-2">
           {workspacesQuery.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
 
@@ -127,13 +132,13 @@ export function HomePage() {
             <p className="text-sm text-destructive">Failed to load workspaces.</p>
           )}
 
-          {workspacesQuery.data && items.length === 0 && (
+          {workspacesQuery.isSuccess && items.length === 0 && (
             <p className="text-sm text-muted-foreground">
               You don’t have any {statusFilter} workspaces.
             </p>
           )}
 
-          {workspacesQuery.data && items.length > 0 && (
+          {workspacesQuery.isSuccess && items.length > 0 && (
             <div className="space-y-2">
               {items.map((ws) => (
                 <Link
@@ -151,6 +156,32 @@ export function HomePage() {
                   </p>
                 </Link>
               ))}
+            </div>
+          )}
+
+          {workspacesQuery.isSuccess && workspacesQuery.data.meta.totalPages > 1 && (
+            <div className="flex items-center justify-between pt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={!workspacesQuery.data.meta.hasPrev}
+              >
+                Prev
+              </Button>
+
+              <p className="text-sm text-muted-foreground">
+                Page {workspacesQuery.data.meta.page + 1} of {workspacesQuery.data.meta.totalPages}
+              </p>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => p + 1)}
+                disabled={!workspacesQuery.data.meta.hasNext}
+              >
+                Next
+              </Button>
             </div>
           )}
         </CardContent>
