@@ -16,8 +16,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createWorkspace } from "@/features/workspaces/api/createWorkspace"
+import { getClosedWorkspaces } from "@/features/workspaces/api/getClosedWorkspaces"
 import { getWorkspaces } from "@/features/workspaces/api/getWorkspaces"
+import type { WorkspaceFilter } from "@/features/workspaces/model/types"
 import { formatDateTime } from "@/shared/lib/date"
 
 export function HomePage() {
@@ -26,9 +29,14 @@ export function HomePage() {
   const qc = useQueryClient()
   const navigate = useNavigate()
 
+  const [statusFilter, setStatusFilter] = useState<WorkspaceFilter>("active")
+
   const workspacesQuery = useQuery({
-    queryKey: ["workspaces", page, size],
-    queryFn: () => getWorkspaces({ page, size }),
+    queryKey: ["workspaces", statusFilter, page, size],
+    queryFn: () =>
+      statusFilter === "active"
+        ? getWorkspaces({ page, size })
+        : getClosedWorkspaces({ page, size }),
   })
 
   const [name, setName] = useState("")
@@ -61,6 +69,20 @@ export function HomePage() {
       <div>
         <h2 className="text-2xl font-semibold">Workspaces</h2>
       </div>
+
+      <Tabs
+        value={statusFilter}
+        onValueChange={(value) => {
+          if (value === "active" || value === "closed") {
+            setStatusFilter(value)
+          }
+        }}
+      >
+        <TabsList>
+          <TabsTrigger value="active">Active</TabsTrigger>
+          <TabsTrigger value="closed">Closed</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       <Dialog
         onOpenChange={(open) => {
@@ -106,7 +128,9 @@ export function HomePage() {
           )}
 
           {workspacesQuery.data && items.length === 0 && (
-            <p className="text-sm text-muted-foreground">You don’t have any workspaces yet.</p>
+            <p className="text-sm text-muted-foreground">
+              You don’t have any {statusFilter} workspaces.
+            </p>
           )}
 
           {workspacesQuery.data && items.length > 0 && (

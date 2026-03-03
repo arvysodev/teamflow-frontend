@@ -15,3 +15,5 @@ export type WorkspaceMember = {
   role: WorkspaceMemberRole
   joinedAt: string
 }
+
+export type WorkspaceFilter = "active" | "closed"
