@@ -74,51 +74,53 @@ export function HomePage() {
         <h2 className="text-2xl font-semibold">Workspaces</h2>
       </div>
 
-      <Tabs
-        value={statusFilter}
-        onValueChange={(value) => {
-          if (value === "active" || value === "closed") {
-            setStatusFilter(value)
-          }
-        }}
-      >
-        <TabsList>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="closed">Closed</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <div className="flex justify-between gap-4">
+        <Tabs
+          value={statusFilter}
+          onValueChange={(value) => {
+            if (value === "active" || value === "closed") {
+              setStatusFilter(value)
+            }
+          }}
+        >
+          <TabsList>
+            <TabsTrigger value="active">Active</TabsTrigger>
+            <TabsTrigger value="closed">Closed</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-      <Dialog
-        onOpenChange={(open) => {
-          if (open) setName("")
-        }}
-      >
-        <DialogTrigger asChild>
-          <Button size="sm">Create workspace</Button>
-        </DialogTrigger>
+        <Dialog
+          onOpenChange={(open) => {
+            if (open) setName("")
+          }}
+        >
+          <DialogTrigger asChild>
+            <Button size="sm">Create workspace</Button>
+          </DialogTrigger>
 
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create workspace</DialogTitle>
-          </DialogHeader>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create workspace</DialogTitle>
+            </DialogHeader>
 
-          <div className="space-y-3">
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Workspace name"
-              autoComplete="off"
-            />
+            <div className="space-y-3">
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Workspace name"
+                autoComplete="off"
+              />
 
-            <Button
-              onClick={() => createMutation.mutate()}
-              disabled={createMutation.isPending || name.trim().length === 0}
-            >
-              {createMutation.isPending ? "Creating..." : "Create"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+              <Button
+                onClick={() => createMutation.mutate()}
+                disabled={createMutation.isPending || name.trim().length === 0}
+              >
+                {createMutation.isPending ? "Creating..." : "Create"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       <Card className="my-4">
         <CardHeader>
