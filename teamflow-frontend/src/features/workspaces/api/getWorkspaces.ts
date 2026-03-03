@@ -1,6 +1,5 @@
-import type { Workspace } from "@/features/workspaces/model/types"
+import type { WorkspacesResponse } from "@/features/workspaces/model/types"
 import { http } from "@/shared/api/http"
-import type { PageResponse } from "@/shared/api/page"
 
 export type GetWorkspacesParams = {
   page?: number
@@ -8,9 +7,9 @@ export type GetWorkspacesParams = {
 }
 
 export async function getWorkspaces(params: GetWorkspacesParams = {}) {
-  const { page = 0, size = 20 } = params
+  const { page = 0, size = 10 } = params
 
-  const { data } = await http.get<PageResponse<Workspace>>("/api/v1/workspaces", {
+  const { data } = await http.get<WorkspacesResponse>("/api/v1/workspaces", {
     params: { page, size },
   })
 
