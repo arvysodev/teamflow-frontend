@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getWorkspaces } from "@/features/workspaces/api/getWorkspaces"
 import { formatDateTime } from "@/shared/lib/date"
+import { Link } from "react-router-dom"
 
 export function HomePage() {
   const page = 0
@@ -25,7 +26,7 @@ export function HomePage() {
         <CardHeader>
           <CardTitle>Your workspaces</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-2">
           {workspacesQuery.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
 
           {workspacesQuery.isError && (
@@ -39,9 +40,10 @@ export function HomePage() {
           {workspacesQuery.data && items.length > 0 && (
             <div className="space-y-2">
               {items.map((ws) => (
-                <div
+                <Link
                   key={ws.id}
                   className="p-4 flex items-center justify-between hover:bg-muted/50 transition"
+                  to={`/workspaces/${ws.id}`}
                 >
                   <div className="min-w-0">
                     <p className="font-medium truncate">{ws.name}</p>
@@ -51,7 +53,7 @@ export function HomePage() {
                   <p className="text-sm text-muted-foreground whitespace-nowrap">
                     {formatDateTime(ws.createdAt)}
                   </p>
-                </div>
+                </Link>
               ))}
             </div>
           )}
