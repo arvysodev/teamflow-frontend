@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { registerRequest } from "@/features/auth/api/register"
 import { getProblemDetail } from "@/shared/api/problemDetails"
 
-const usernameRegex = /^[a-z0-9._-]{3,50}$/
+const usernameRegex = /^[a-zA-Z0-9._-]{3,50}$/
 
 const schema = z.object({
   username: z
