@@ -1,5 +1,6 @@
 import axios from "axios"
 
+import { queryClient } from "@/app/providers/queryClient"
 import { emitLogout } from "@/shared/lib/authBus"
 import { env } from "@/shared/lib/env"
 import { navigate } from "@/shared/lib/navigation"
@@ -29,6 +30,7 @@ http.interceptors.response.use(
 
     if (status === 401) {
       clearAccessToken()
+      queryClient.clear()
       emitLogout()
       navigate("/login")
     }

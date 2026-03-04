@@ -3,6 +3,7 @@ import { useEffect } from "react"
 
 import { queryClient } from "@/app/providers/queryClient"
 import { onLogout } from "@/shared/lib/authBus"
+import { isJwtExpired } from "@/shared/lib/jwt"
 import { clearAccessToken, getAccessToken, setAccessToken } from "@/shared/lib/token"
 
 type AuthContextValue = {
@@ -14,7 +15,15 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const [isAuthenticated, setIsAuthenticated] = useState(!!getAccessToken())
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    const token = getAccessToken()
+    if (!token) return false
+    if (isJwtExpired(token)) {
+      clearAccessToken()
+      return false
+    }
+    return true
+  })
 
   useEffect(() => {
     return onLogout(() => {
