@@ -21,3 +21,15 @@ export function isJwtExpired(token: string): boolean {
     return true
   }
 }
+
+export function getJwtExpSeconds(token: string): number | null {
+  try {
+    const payloadPart = token.split(".")[1]
+    if (!payloadPart) return null
+    const json = base64UrlDecode(payloadPart)
+    const payload = JSON.parse(json) as { exp?: number }
+    return typeof payload.exp === "number" ? payload.exp : null
+  } catch {
+    return null
+  }
+}

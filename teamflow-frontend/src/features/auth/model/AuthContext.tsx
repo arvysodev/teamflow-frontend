@@ -4,6 +4,7 @@ import { useEffect } from "react"
 import { queryClient } from "@/app/providers/queryClient"
 import { onLogout } from "@/shared/lib/authBus"
 import { isJwtExpired } from "@/shared/lib/jwt"
+import { getJwtExpSeconds } from "@/shared/lib/jwt"
 import { clearAccessToken, getAccessToken, setAccessToken } from "@/shared/lib/token"
 
 type AuthContextValue = {
@@ -15,15 +16,17 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    const token = getAccessToken()
-    if (!token) return false
-    if (isJwtExpired(token)) {
+  const [token, setToken] = useState<string | null>(() => {
+    const t = getAccessToken()
+    if (!t) return null
+    if (isJwtExpired(t)) {
       clearAccessToken()
-      return false
+      return null
     }
-    return true
+    return t
   })
+
+  const [isAuthenticated, setIsAuthenticated] = useState(Boolean(token))
 
   useEffect(() => {
     return onLogout(() => {
@@ -33,14 +36,34 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   function login(token: string) {
     setAccessToken(token)
+    setToken(token)
     setIsAuthenticated(true)
   }
 
   function logout() {
     clearAccessToken()
+    setToken(null)
     setIsAuthenticated(false)
     queryClient.clear()
   }
+
+  useEffect(() => {
+    if (!token) return
+
+    const exp = getJwtExpSeconds(token)
+    if (!exp) return
+
+    const nowMs = Date.now()
+    const expMs = exp * 1000
+
+    const delayMs = Math.max(0, expMs - nowMs - 2000)
+
+    const id = window.setTimeout(() => {
+      logout()
+    }, delayMs)
+
+    return () => window.clearTimeout(id)
+  }, [token])
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, login, logout }}>

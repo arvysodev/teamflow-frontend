@@ -21,3 +21,15 @@ export type RenameWorkspaceRequest = {
 export type CreateWorkspaceRequest = {
   name: string
 }
+
+export type CreateWorkspaceInviteRequest = {
+  email: string
+}
+
+export type CreateWorkspaceInviteResponse = {
+  message: string
+}
+
+export type AcceptWorkspaceInviteRequest = {
+  rawToken: string
+}

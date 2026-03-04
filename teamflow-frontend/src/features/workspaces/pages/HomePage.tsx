@@ -17,10 +17,12 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { acceptWorkspaceInvite } from "@/features/workspaces/api/acceptWorkspaceInvite"
 import { createWorkspace } from "@/features/workspaces/api/createWorkspace"
 import { getClosedWorkspaces } from "@/features/workspaces/api/getClosedWorkspaces"
 import { getWorkspaces } from "@/features/workspaces/api/getWorkspaces"
 import type { WorkspaceFilter } from "@/features/workspaces/model/types"
+import { getProblemDetail } from "@/shared/api/problemDetails"
 import { formatDateTime } from "@/shared/lib/date"
 
 export function HomePage() {
@@ -30,6 +32,7 @@ export function HomePage() {
   const navigate = useNavigate()
 
   const [statusFilter, setStatusFilter] = useState<WorkspaceFilter>("active")
+  const [inviteToken, setInviteToken] = useState("")
 
   useEffect(() => {
     setPage(0)
@@ -56,9 +59,10 @@ export function HomePage() {
     },
     onError: (error) => {
       if (axios.isAxiosError(error)) {
-        const detail = (error.response?.data as any)?.detail
-        if (detail) {
-          toast.error("Create failed", { description: detail })
+        const problem = getProblemDetail(error.response?.data)
+
+        if (problem?.detail) {
+          toast.error("Create failed", { description: problem.detail })
           return
         }
       }
@@ -67,6 +71,27 @@ export function HomePage() {
   })
 
   const items = workspacesQuery.data?.items ?? []
+
+  const acceptInviteMutation = useMutation({
+    mutationFn: () => acceptWorkspaceInvite({ rawToken: inviteToken.trim() }),
+    onSuccess: async () => {
+      toast.success("Invite accepted")
+      setInviteToken("")
+
+      await qc.invalidateQueries({ queryKey: ["workspaces"] })
+    },
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        const problem = getProblemDetail(error.response?.data)
+
+        if (problem?.detail) {
+          toast.error("Accept failed", { description: problem.detail })
+          return
+        }
+      }
+      toast.error("Accept failed")
+    },
+  })
 
   return (
     <div className="space-y-4">
@@ -121,6 +146,33 @@ export function HomePage() {
           </DialogContent>
         </Dialog>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Have an invite token?</CardTitle>
+        </CardHeader>
+
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Paste the invite token you received (demo: token is logged by the backend notifier).
+          </p>
+
+          <div className="flex gap-2">
+            <Input
+              value={inviteToken}
+              onChange={(e) => setInviteToken(e.target.value)}
+              placeholder="Invite token"
+              autoComplete="off"
+            />
+            <Button
+              onClick={() => acceptInviteMutation.mutate()}
+              disabled={acceptInviteMutation.isPending || inviteToken.trim().length === 0}
+            >
+              {acceptInviteMutation.isPending ? "Accepting…" : "Accept"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="my-4">
         <CardHeader>
