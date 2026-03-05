@@ -1,12 +1,4 @@
-import type { ProjectStatus } from "../model/types"
-
-export type ProjectSort =
-  | "updatedAt,desc"
-  | "updatedAt,asc"
-  | "createdAt,desc"
-  | "createdAt,asc"
-  | "name,asc"
-  | "name,desc"
+import type { PageMeta, ProjectSort, ProjectStatus } from "../model/types"
 
 export type GetProjectsParams = {
   workspaceId: string
@@ -19,4 +11,9 @@ export type GetProjectsParams = {
 
 export type CreateProjectRequest = {
   name: string
+}
+
+export type PageResponse<T> = {
+  items: T[]
+  meta: PageMeta
 }

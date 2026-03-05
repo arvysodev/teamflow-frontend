@@ -19,7 +19,36 @@ export type PageMeta = {
   hasPrev: boolean
 }
 
-export type PageResponse<T> = {
-  items: T[]
-  meta: PageMeta
+export type ProjectSort =
+  | "updatedAt,desc"
+  | "updatedAt,asc"
+  | "createdAt,desc"
+  | "createdAt,asc"
+  | "name,asc"
+  | "name,desc"
+
+export type WorkspaceProjectsCardProps = {
+  workspaceId: string
+  canCreate: boolean
+}
+
+export type ProjectsToolbarProps = {
+  query: string
+  onQueryChange: (v: string) => void
+
+  sort: ProjectSort
+  onSortChange: (v: ProjectSort) => void
+
+  canCreate: boolean
+  onCreateClick: () => void
+}
+
+export type CreateProjectDialogProps = {
+  open: boolean
+  name: string
+  creating: boolean
+
+  onOpenChange: (open: boolean) => void
+  onNameChange: (v: string) => void
+  onCreate: () => void
 }
