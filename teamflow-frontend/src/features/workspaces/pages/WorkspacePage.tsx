@@ -38,6 +38,8 @@ import { getProblemDetail } from "@/shared/api/problemDetails"
 import { useMeQuery } from "@/shared/api/queries"
 import { formatDateTime } from "@/shared/lib/date"
 
+import { WorkspaceHeader } from "../components/WorkspaceHeader"
+
 export function WorkspacePage() {
   const { workspaceId } = useParams()
   const [projectStatus, setProjectStatus] = useState<ProjectStatus>("ACTIVE")
@@ -180,83 +182,21 @@ export function WorkspacePage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <h2 className="text-2xl font-semibold truncate">{ws.name}</h2>
-          <p className="text-sm text-muted-foreground">{ws.status}</p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button asChild variant="secondary" size="sm">
-            <Link to="members">Members</Link>
-          </Button>
-
-          {isOwner && (
-            <Dialog
-              onOpenChange={(open) => {
-                if (open) setNewName(currentName)
-              }}
-            >
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  Rename
-                </Button>
-              </DialogTrigger>
-
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Rename workspace</DialogTitle>
-                </DialogHeader>
-
-                <div className="space-y-3">
-                  <Input
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    placeholder="Workspace name"
-                  />
-
-                  <Button
-                    onClick={() => renameMutation.mutate(newName)}
-                    disabled={renameMutation.isPending || newName.trim().length === 0}
-                  >
-                    {renameMutation.isPending ? "Saving…" : "Save"}
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
-
-          {isOwner &&
-            (!isClosed ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => closeMutation.mutate()}
-                disabled={closeMutation.isPending}
-              >
-                {closeMutation.isPending ? "Closing…" : "Close"}
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => restoreMutation.mutate()}
-                disabled={restoreMutation.isPending}
-              >
-                {restoreMutation.isPending ? "Restoring…" : "Restore"}
-              </Button>
-            ))}
-
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => leaveMutation.mutate()}
-            disabled={leaveMutation.isPending}
-          >
-            {leaveMutation.isPending ? "Leaving…" : "Leave"}
-          </Button>
-        </div>
-      </div>
+      <WorkspaceHeader
+        workspaceId={workspaceId}
+        name={ws.name}
+        status={ws.status}
+        isOwner={isOwner}
+        isClosed={isClosed}
+        onRename={(name) => renameMutation.mutate(name)}
+        renaming={renameMutation.isPending}
+        onClose={() => closeMutation.mutate()}
+        closing={closeMutation.isPending}
+        onRestore={() => restoreMutation.mutate()}
+        restoring={restoreMutation.isPending}
+        onLeave={() => leaveMutation.mutate()}
+        leaving={leaveMutation.isPending}
+      />
 
       <Card>
         <CardHeader>

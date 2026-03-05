@@ -17,3 +17,23 @@ export type WorkspaceMember = {
 }
 
 export type WorkspaceFilter = "active" | "closed"
+
+export type WorkspaceHeaderProps = {
+  workspaceId: string
+  name: string
+  status: string
+  isOwner: boolean
+  isClosed: boolean
+
+  onRename: (name: string) => void
+  renaming: boolean
+
+  onClose: () => void
+  closing: boolean
+
+  onRestore: () => void
+  restoring: boolean
+
+  onLeave: () => void
+  leaving: boolean
+}
