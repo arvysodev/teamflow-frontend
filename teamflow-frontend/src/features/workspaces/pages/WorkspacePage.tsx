@@ -15,6 +15,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { getProjectParams } from "@/features/projects/api/getProjects"
+import type { ProjectStatus } from "@/features/projects/model/types"
 import { closeWorkspace } from "@/features/workspaces/api/closeWorkspace"
 import { getWorkspaceById } from "@/features/workspaces/api/getWorkspaceById"
 import { getWorkspaceMembers } from "@/features/workspaces/api/getWorkspaceMembers"
@@ -26,6 +29,9 @@ import { formatDateTime } from "@/shared/lib/date"
 
 export function WorkspacePage() {
   const { workspaceId } = useParams()
+  const [projectStatus, setProjectStatus] = useState<ProjectStatus>("ACTIVE")
+  const [projectsPage, setProjectsPage] = useState(0)
+  const projectsSize = 10
   const navigate = useNavigate()
   const qc = useQueryClient()
 
@@ -36,6 +42,18 @@ export function WorkspacePage() {
   const workspaceQuery = useQuery({
     queryKey: ["workspace", workspaceId],
     queryFn: () => getWorkspaceById(workspaceId),
+  })
+
+  const projectsQuery = useQuery({
+    queryKey: ["projects", workspaceId, projectStatus, projectsPage, projectsSize],
+    queryFn: () =>
+      getProjectParams({
+        workspaceId: workspaceId!,
+        status: projectStatus,
+        page: projectsPage,
+        size: projectsSize,
+      }),
+    enabled: !!workspaceId,
   })
 
   const meQuery = useMeQuery()
@@ -202,6 +220,90 @@ export function WorkspacePage() {
             {membersQuery.isPending ? "Loading…" : (myRole ?? "—")}
           </p>
           <p className="text-sm text-muted-foreground">projects</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-4">
+          <CardTitle>Projects</CardTitle>
+        </CardHeader>
+
+        <Tabs
+          value={projectStatus}
+          onValueChange={(v) => {
+            if (v === "ACTIVE" || v === "ARCHIVED") {
+              setProjectStatus(v)
+              setProjectsPage(0)
+            }
+          }}
+        >
+          <TabsList className="mx-4 mb-4">
+            <TabsTrigger value="ACTIVE">Active</TabsTrigger>
+            <TabsTrigger value="ARCHIVED">Archived</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        <CardContent>
+          {projectsQuery.isPending && (
+            <p className="text-sm text-muted-foreground">Loading projects...</p>
+          )}
+
+          {projectsQuery.isError && (
+            <p className="text-sm text-destructive">Failed to load projects</p>
+          )}
+
+          {projectsQuery.isSuccess && projectsQuery.data.items.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              No {projectStatus.toLowerCase()} projects yet.
+            </p>
+          )}
+
+          {projectsQuery.isSuccess && projectsQuery.data.items.length > 0 && (
+            <div className="rounded-md border divide-y">
+              {projectsQuery.data.items.map((p) => (
+                <Link
+                  key={p.id}
+                  to={`/workspaces/${workspaceId}/projects/${p.id}`}
+                  className="px-4 py-2 flex items-center justify-between hover:bg-muted/50 transition"
+                >
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">{p.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Updated: {formatDateTime(p.updatedAt)}
+                    </p>
+
+                    <span className="text-sm text-muted-foreground">{p.status}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {projectsQuery.isSuccess && projectsQuery.data.meta.totalPages > 1 && (
+            <div className="flex items-center justify-between pt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setProjectsPage((x) => Math.max(0, x - 1))}
+                disabled={!projectsQuery.data.meta.hasPrev}
+              >
+                Prev
+              </Button>
+
+              <p className="text-sm text-muted-foreground">
+                Page {projectsQuery.data.meta.page + 1} of {projectsQuery.data.meta.totalPages}
+              </p>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setProjectsPage((x) => x + 1)}
+                disabled={!projectsQuery.data.meta.hasNext}
+              >
+                Next
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
