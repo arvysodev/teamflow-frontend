@@ -13,7 +13,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import {
@@ -102,9 +101,6 @@ export function WorkspacePage() {
       : undefined
 
   const isOwner = myRole === "OWNER"
-
-  const currentName = workspaceQuery.data?.name ?? ""
-  const [newName, setNewName] = useState("")
 
   const renameMutation = useMutation({
     mutationFn: (name: string) => renameWorkspace(workspaceId, { name }),
