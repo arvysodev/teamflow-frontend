@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import axios from "axios"
 import { toast } from "sonner"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { Link, useNavigate, useParams } from "react-router-dom"
 
@@ -15,8 +16,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { getProjectParams } from "@/features/projects/api/getProjects"
+import { createProject } from "@/features/projects/api/createProject"
+import { getProjects } from "@/features/projects/api/getProjects"
+import type { ProjectSort } from "@/features/projects/api/types"
 import type { ProjectStatus } from "@/features/projects/model/types"
 import { closeWorkspace } from "@/features/workspaces/api/closeWorkspace"
 import { getWorkspaceById } from "@/features/workspaces/api/getWorkspaceById"
@@ -24,14 +34,21 @@ import { getWorkspaceMembers } from "@/features/workspaces/api/getWorkspaceMembe
 import { leaveWorkspace } from "@/features/workspaces/api/leaveWorkspace"
 import { renameWorkspace } from "@/features/workspaces/api/renameWorkspace"
 import { restoreWorkspace } from "@/features/workspaces/api/restoreWorkspace"
+import { getProblemDetail } from "@/shared/api/problemDetails"
 import { useMeQuery } from "@/shared/api/queries"
 import { formatDateTime } from "@/shared/lib/date"
 
 export function WorkspacePage() {
   const { workspaceId } = useParams()
   const [projectStatus, setProjectStatus] = useState<ProjectStatus>("ACTIVE")
+  const [projectQuery, setProjectQuery] = useState("")
+  const [projectSort, setProjectSort] = useState<ProjectSort>("updatedAt,desc")
   const [projectsPage, setProjectsPage] = useState(0)
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [projectName, setProjectName] = useState("")
   const projectsSize = 10
+  const normalizedQ = projectQuery.trim()
+
   const navigate = useNavigate()
   const qc = useQueryClient()
 
@@ -45,16 +62,30 @@ export function WorkspacePage() {
   })
 
   const projectsQuery = useQuery({
-    queryKey: ["projects", workspaceId, projectStatus, projectsPage, projectsSize],
+    queryKey: [
+      "projects",
+      workspaceId,
+      projectStatus,
+      projectsPage,
+      projectsSize,
+      normalizedQ,
+      projectSort,
+    ],
     queryFn: () =>
-      getProjectParams({
+      getProjects({
         workspaceId: workspaceId!,
         status: projectStatus,
         page: projectsPage,
         size: projectsSize,
+        q: normalizedQ,
+        sort: projectSort,
       }),
     enabled: !!workspaceId,
   })
+
+  useEffect(() => {
+    setProjectsPage(0)
+  }, [projectStatus, projectSort, normalizedQ])
 
   const meQuery = useMeQuery()
 
@@ -111,6 +142,29 @@ export function WorkspacePage() {
       navigate("/", { replace: true })
     },
     onError: () => toast.error("Leave failed"),
+  })
+
+  const createProjectMutation = useMutation({
+    mutationFn: () => createProject(workspaceId, { name: projectName.trim() }),
+    onSuccess: async (created) => {
+      toast.success("Project created")
+      setProjectName("")
+      setIsCreateOpen(false)
+
+      await qc.invalidateQueries({ queryKey: ["projects", workspaceId] })
+
+      navigate(`/workspaces/${workspaceId}/projects/${created.id}`)
+    },
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        const problem = getProblemDetail(error.response?.data)
+        if (problem?.detail) {
+          toast.error("Create failed", { description: problem.detail })
+          return
+        }
+      }
+      toast.error("Create failed")
+    },
   })
 
   if (workspaceQuery.isPending) {
@@ -219,29 +273,102 @@ export function WorkspacePage() {
             <span className="text-muted-foreground">My role:</span>{" "}
             {membersQuery.isPending ? "Loading…" : (myRole ?? "—")}
           </p>
-          <p className="text-sm text-muted-foreground">projects</p>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4">
           <CardTitle>Projects</CardTitle>
+
+          <div className="flex items-center gap-2">
+            <Input
+              value={projectQuery}
+              onChange={(e) => setProjectQuery(e.target.value)}
+              placeholder="Search projects…"
+              className="w-[240px]"
+              autoComplete="off"
+            />
+
+            <Select
+              value={projectSort}
+              onValueChange={(v) => {
+                if (
+                  v === "updatedAt,desc" ||
+                  v === "updatedAt,asc" ||
+                  v === "createdAt,desc" ||
+                  v === "createdAt,asc" ||
+                  v === "name,asc" ||
+                  v === "name,desc"
+                ) {
+                  setProjectSort(v)
+                }
+              }}
+            >
+              <SelectTrigger className="w-[210px]">
+                <SelectValue placeholder="Sort" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="updatedAt,desc">Updated (newest)</SelectItem>
+                <SelectItem value="updatedAt,asc">Updated (oldest)</SelectItem>
+                <SelectItem value="createdAt,desc">Created (newest)</SelectItem>
+                <SelectItem value="createdAt,asc">Created (oldest)</SelectItem>
+                <SelectItem value="name,asc">Name (ascending)</SelectItem>
+                <SelectItem value="name,desc">Name (descending)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
 
-        <Tabs
-          value={projectStatus}
-          onValueChange={(v) => {
-            if (v === "ACTIVE" || v === "ARCHIVED") {
-              setProjectStatus(v)
-              setProjectsPage(0)
-            }
+        <div className="flex">
+          <Tabs
+            value={projectStatus}
+            onValueChange={(v) => {
+              if (v === "ACTIVE" || v === "ARCHIVED") {
+                setProjectStatus(v)
+                setProjectsPage(0)
+              }
+            }}
+          >
+            <TabsList className="mx-4 mb-4">
+              <TabsTrigger value="ACTIVE">Active</TabsTrigger>
+              <TabsTrigger value="ARCHIVED">Archived</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          <Button size="sm" onClick={() => setIsCreateOpen(true)}>
+            Create
+          </Button>
+        </div>
+
+        <Dialog
+          open={isCreateOpen}
+          onOpenChange={(open) => {
+            setIsCreateOpen(open)
+            if (open) setProjectName("")
           }}
         >
-          <TabsList className="mx-4 mb-4">
-            <TabsTrigger value="ACTIVE">Active</TabsTrigger>
-            <TabsTrigger value="ARCHIVED">Archived</TabsTrigger>
-          </TabsList>
-        </Tabs>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create project</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-3">
+              <Input
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+                placeholder="Project name"
+                autoComplete="off"
+              />
+
+              <Button
+                onClick={() => createProjectMutation.mutate()}
+                disabled={createProjectMutation.isPending || projectName.trim().length === 0}
+              >
+                {createProjectMutation.isPending ? "Creating…" : "Create"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <CardContent>
           {projectsQuery.isPending && (
@@ -259,21 +386,27 @@ export function WorkspacePage() {
           )}
 
           {projectsQuery.isSuccess && projectsQuery.data.items.length > 0 && (
-            <div className="rounded-md border divide-y">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {projectsQuery.data.items.map((p) => (
                 <Link
                   key={p.id}
                   to={`/workspaces/${workspaceId}/projects/${p.id}`}
-                  className="px-4 py-2 flex items-center justify-between hover:bg-muted/50 transition"
+                  className="block"
                 >
-                  <div className="min-w-0">
-                    <p className="font-medium truncate">{p.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Updated: {formatDateTime(p.updatedAt)}
-                    </p>
-
-                    <span className="text-sm text-muted-foreground">{p.status}</span>
-                  </div>
+                  <Card className="hover:bg-muted transition">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base truncate">{p.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-1">
+                      <p className="text-sm text-muted-foreground">
+                        Updated: {formatDateTime(p.updatedAt)}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Created: {formatDateTime(p.createdAt)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Status: {p.status}</p>
+                    </CardContent>
+                  </Card>
                 </Link>
               ))}
             </div>
