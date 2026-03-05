@@ -8,12 +8,7 @@ import { Link, useNavigate, useParams } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -38,6 +33,7 @@ import { useMeQuery } from "@/shared/api/queries"
 import { formatDateTime } from "@/shared/lib/date"
 
 import { WorkspaceHeader } from "../components/WorkspaceHeader"
+import { WorkspaceDetailsCard } from "../components/WorkspaceDetailsCard"
 
 export function WorkspacePage() {
   const { workspaceId } = useParams()
@@ -194,23 +190,12 @@ export function WorkspacePage() {
         leaving={leaveMutation.isPending}
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <p className="text-sm">
-            <span className="text-muted-foreground">Created:</span> {formatDateTime(ws.createdAt)}
-          </p>
-          <p className="text-sm">
-            <span className="text-muted-foreground">Updated:</span> {formatDateTime(ws.updatedAt)}
-          </p>
-          <p className="text-sm">
-            <span className="text-muted-foreground">My role:</span>{" "}
-            {membersQuery.isPending ? "Loading…" : (myRole ?? "—")}
-          </p>
-        </CardContent>
-      </Card>
+      <WorkspaceDetailsCard
+        createdAt={ws.createdAt}
+        updatedAt={ws.updatedAt}
+        myRole={myRole}
+        roleLoading={membersQuery.isPending}
+      />
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4">

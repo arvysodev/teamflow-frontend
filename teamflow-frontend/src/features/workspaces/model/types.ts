@@ -37,3 +37,10 @@ export type WorkspaceHeaderProps = {
   onLeave: () => void
   leaving: boolean
 }
+
+export type WorkspaceDetailsCardProps = {
+  createdAt: string
+  updatedAt: string
+  myRole?: string
+  roleLoading: boolean
+}
