@@ -8,7 +8,18 @@ import { Link, useParams } from "react-router-dom"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { archiveProject } from "@/features/projects/api/archiveProject"
 import { getProjectById } from "@/features/projects/api/getProjectById"
+import { renameProject } from "@/features/projects/api/renameProject"
+import { restoreProject } from "@/features/projects/api/restoreProject"
 import { assignTask } from "@/features/tasks/api/assignTask"
 import { changeTaskStatus } from "@/features/tasks/api/changeTaskStatus"
 import { createTask } from "@/features/tasks/api/createTask"
@@ -37,6 +48,8 @@ export function ProjectPage() {
   const [isEditingTask, setIsEditingTask] = useState(false)
   const [draftTaskTitle, setDraftTaskTitle] = useState("")
   const [draftTaskDescription, setDraftTaskDescription] = useState("")
+  const [isRenameOpen, setIsRenameOpen] = useState(false)
+  const [newProjectName, setNewProjectName] = useState("")
 
   const hasIds = Boolean(workspaceId && projectId)
 
@@ -212,6 +225,77 @@ export function ProjectPage() {
     },
   })
 
+  const renameProjectMutation = useMutation({
+    mutationFn: () => renameProject(workspaceId!, projectId!, { name: newProjectName.trim() }),
+
+    onSuccess: async () => {
+      toast.success("Project renamed")
+      setIsRenameOpen(false)
+      setNewProjectName("")
+
+      await qc.invalidateQueries({ queryKey: ["project", workspaceId, projectId] })
+      await qc.invalidateQueries({ queryKey: ["projects", workspaceId] })
+    },
+
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        const problem = getProblemDetail(error.response?.data)
+        if (problem?.detail) {
+          toast.error("Rename failed", { description: problem.detail })
+          return
+        }
+      }
+
+      toast.error("Rename failed")
+    },
+  })
+
+  const archiveProjectMutation = useMutation({
+    mutationFn: () => archiveProject(workspaceId!, projectId!),
+
+    onSuccess: async () => {
+      toast.success("Project archived")
+
+      await qc.invalidateQueries({ queryKey: ["project", workspaceId, projectId] })
+      await qc.invalidateQueries({ queryKey: ["projects", workspaceId] })
+    },
+
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        const problem = getProblemDetail(error.response?.data)
+        if (problem?.detail) {
+          toast.error("Archive failed", { description: problem.detail })
+          return
+        }
+      }
+
+      toast.error("Archive failed")
+    },
+  })
+
+  const restoreProjectMutation = useMutation({
+    mutationFn: () => restoreProject(workspaceId!, projectId!),
+
+    onSuccess: async () => {
+      toast.success("Project restored")
+
+      await qc.invalidateQueries({ queryKey: ["project", workspaceId, projectId] })
+      await qc.invalidateQueries({ queryKey: ["projects", workspaceId] })
+    },
+
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        const problem = getProblemDetail(error.response?.data)
+        if (problem?.detail) {
+          toast.error("Restore failed", { description: problem.detail })
+          return
+        }
+      }
+
+      toast.error("Restore failed")
+    },
+  })
+
   const tasks = tasksQuery.data?.items ?? []
   const todoTasks = useMemo(() => tasks.filter((t) => t.status === "TODO"), [tasks])
   const inProgressTasks = useMemo(() => tasks.filter((t) => t.status === "IN_PROGRESS"), [tasks])
@@ -238,6 +322,7 @@ export function ProjectPage() {
   }
 
   const project = projectQuery.data
+  const isArchived = project.status === "ARCHIVED"
 
   return (
     <div className="space-y-4">
@@ -253,9 +338,69 @@ export function ProjectPage() {
           <p className="text-sm text-muted-foreground">{project.status}</p>
         </div>
 
-        <Button size="sm" onClick={() => setIsCreateOpen(true)}>
-          Create task
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" onClick={() => setIsCreateOpen(true)}>
+            Create task
+          </Button>
+
+          <Dialog
+            open={isRenameOpen}
+            onOpenChange={(open) => {
+              setIsRenameOpen(open)
+              if (open) {
+                setNewProjectName(project.name)
+              }
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                Rename
+              </Button>
+            </DialogTrigger>
+
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Rename project</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-3">
+                <Input
+                  value={newProjectName}
+                  onChange={(e) => setNewProjectName(e.target.value)}
+                  placeholder="Project name"
+                  autoComplete="off"
+                />
+
+                <Button
+                  onClick={() => renameProjectMutation.mutate()}
+                  disabled={renameProjectMutation.isPending || newProjectName.trim().length === 0}
+                >
+                  {renameProjectMutation.isPending ? "Saving…" : "Save"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {!isArchived ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => archiveProjectMutation.mutate()}
+              disabled={archiveProjectMutation.isPending}
+            >
+              {archiveProjectMutation.isPending ? "Archiving…" : "Archive"}
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => restoreProjectMutation.mutate()}
+              disabled={restoreProjectMutation.isPending}
+            >
+              {restoreProjectMutation.isPending ? "Restoring…" : "Restore"}
+            </Button>
+          )}
+        </div>
       </div>
 
       <CreateTaskDialog

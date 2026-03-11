@@ -17,3 +17,7 @@ export type PageResponse<T> = {
   items: T[]
   meta: PageMeta
 }
+
+export type RenameProjectRequest = {
+  name: string
+}

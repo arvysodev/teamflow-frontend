@@ -40,6 +40,7 @@ export function ProfilePage() {
         </CardHeader>
 
         <CardContent className="space-y-3">
+          <Row label="Id" value={u.id} />
           <Row label="Username" value={u.username} />
           <Row label="Email" value={u.email} />
           <Row label="Role" value={u.role} />
