@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import axios from "axios"
 import { toast } from "sonner"
 
@@ -22,11 +22,14 @@ import { formatDateTime } from "@/shared/lib/date"
 
 import { getWorkspaceMembers } from "../api/getWorkspaceMembers"
 import { inviteWorkspaceMember } from "../api/inviteWorkspaceMember"
+import { promoteWorkspaceMember } from "../api/promoteWorkspaceMember"
+import { removeWorkspaceMember } from "../api/removeWorkspaceMember"
 
 export function WorkspaceMembersPage() {
   const { workspaceId } = useParams()
   const meQuery = useMeQuery()
   const [inviteEmail, setInviteEmail] = useState("")
+  const qc = useQueryClient()
 
   const membersQuery = useQuery({
     queryKey: ["workspaceMembers", workspaceId],
@@ -51,6 +54,47 @@ export function WorkspaceMembersPage() {
       }
 
       toast.error("Invite failed")
+    },
+  })
+
+  const promoteMutation = useMutation({
+    mutationFn: ({ userId }: { userId: string }) => promoteWorkspaceMember(workspaceId!, userId),
+    onSuccess: async () => {
+      toast.success("Member promoted")
+      await qc.invalidateQueries({ queryKey: ["workspaceMembers", workspaceId] })
+    },
+
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        const problem = getProblemDetail(error.response?.data)
+        if (problem?.detail) {
+          toast.error("Promote failed", { description: problem.detail })
+          return
+        }
+      }
+
+      toast.error("Promote failed")
+    },
+  })
+
+  const removeMutation = useMutation({
+    mutationFn: ({ userId }: { userId: string }) => removeWorkspaceMember(workspaceId!, userId),
+
+    onSuccess: async () => {
+      toast.success("Member removed")
+      await qc.invalidateQueries({ queryKey: ["workspaceMembers", workspaceId] })
+    },
+
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        const problem = getProblemDetail(error.response?.data)
+        if (problem?.detail) {
+          toast.error("Remove failed", { description: problem.detail })
+          return
+        }
+      }
+
+      toast.error("Remove failed")
     },
   })
 
@@ -126,9 +170,32 @@ export function WorkspaceMembersPage() {
                     <p className="text-sm text-muted-foreground">
                       Joined {formatDateTime(m.joinedAt)}
                     </p>
+                    <span className="text-sm text-muted-foreground">{m.role}</span>
                   </div>
 
-                  <span className="text-sm text-muted-foreground">{m.role}</span>
+                  <div className="flex items-center gap-3">
+                    {isOwner && meQuery.data?.id !== m.userId && m.role !== "OWNER" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => promoteMutation.mutate({ userId: m.userId })}
+                        disabled={promoteMutation.isPending}
+                      >
+                        Promote
+                      </Button>
+                    )}
+
+                    {isOwner && meQuery.data?.id !== m.userId && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => removeMutation.mutate({ userId: m.userId })}
+                        disabled={removeMutation.isPending}
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
