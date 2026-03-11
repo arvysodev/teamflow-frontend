@@ -9,12 +9,15 @@ import { Link, useParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getProjectById } from "@/features/projects/api/getProjectById"
+import { changeTaskStatus } from "@/features/tasks/api/changeTaskStatus"
 import { createTask } from "@/features/tasks/api/createTask"
 import { getTasks } from "@/features/tasks/api/getTasks"
+import { CreateTaskDialog } from "@/features/tasks/components/CreateTaskDialog"
 import { TaskColumn } from "@/features/tasks/components/TaskColumn"
+import type { Task, TaskStatus } from "@/features/tasks/model/types"
 import { getProblemDetail } from "@/shared/api/problemDetails"
 import { formatDateTime } from "@/shared/lib/date"
-import { CreateTaskDialog } from "@/features/tasks/components/CreateTaskDialog"
+import { TaskDetailsDialog } from "@/features/tasks/components/TaskDetailsDialog"
 
 export function ProjectPage() {
   const { workspaceId, projectId } = useParams()
@@ -23,6 +26,8 @@ export function ProjectPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [taskTitle, setTaskTitle] = useState("")
   const [taskDescription, setTaskDescription] = useState("")
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false)
 
   const hasIds = Boolean(workspaceId && projectId)
 
@@ -72,6 +77,32 @@ export function ProjectPage() {
       }
 
       toast.error("Create failed")
+    },
+  })
+
+  const changeStatusMutation = useMutation({
+    mutationFn: ({ taskId, status }: { taskId: string; status: TaskStatus }) =>
+      changeTaskStatus({
+        workspaceId: workspaceId!,
+        projectId: projectId!,
+        taskId,
+        status,
+      }),
+
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["tasks", workspaceId, projectId] })
+    },
+
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        const problem = getProblemDetail(error.response?.data)
+        if (problem?.detail) {
+          toast.error("Status change failed", { description: problem.detail })
+          return
+        }
+      }
+
+      toast.error("Status change failed")
     },
   })
 
@@ -161,10 +192,44 @@ export function ProjectPage() {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <TaskColumn title="Todo" tasks={todoTasks} />
-        <TaskColumn title="In progress" tasks={inProgressTasks} />
-        <TaskColumn title="Done" tasks={doneTasks} />
+        <TaskColumn
+          title="Todo"
+          tasks={todoTasks}
+          onTaskClick={(task) => {
+            setSelectedTask(task)
+            setIsTaskDialogOpen(true)
+          }}
+        />
+
+        <TaskColumn
+          title="In progress"
+          tasks={inProgressTasks}
+          onTaskClick={(task) => {
+            setSelectedTask(task)
+            setIsTaskDialogOpen(true)
+          }}
+        />
+
+        <TaskColumn
+          title="Done"
+          tasks={doneTasks}
+          onTaskClick={(task) => {
+            setSelectedTask(task)
+            setIsTaskDialogOpen(true)
+          }}
+        />
       </div>
+
+      <TaskDetailsDialog
+        open={isTaskDialogOpen}
+        task={selectedTask}
+        onOpenChange={(open) => {
+          setIsTaskDialogOpen(open)
+          if (!open) {
+            setSelectedTask(null)
+          }
+        }}
+      />
     </div>
   )
 }

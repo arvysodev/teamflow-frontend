@@ -24,6 +24,7 @@ export type TasksPageMeta = {
 export type TaskColumnProps = {
   title: string
   tasks: Task[]
+  onTaskClick: (task: Task) => void
 }
 
 export type CreateTaskDialogProps = {
@@ -36,4 +37,22 @@ export type CreateTaskDialogProps = {
   onTitleChange: (value: string) => void
   onDescriptionChange: (value: string) => void
   onCreate: () => void
+}
+
+export type ChangeTaskStatusParams = {
+  workspaceId: string
+  projectId: string
+  taskId: string
+  status: TaskStatus
+}
+
+export type TaskCardProps = {
+  task: Task
+  onClick: () => void
+}
+
+export type TaskDetailsDialogProps = {
+  open: boolean
+  task: Task | null
+  onOpenChange: (open: boolean) => void
 }
