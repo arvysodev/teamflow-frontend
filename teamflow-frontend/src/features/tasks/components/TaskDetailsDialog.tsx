@@ -1,6 +1,14 @@
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import type { TaskDetailsDialogProps } from "@/features/tasks/model/types"
 import { formatDateTime } from "@/shared/lib/date"
 
@@ -13,16 +21,61 @@ export function TaskDetailsDialog(props: TaskDetailsDialogProps) {
         {!task ? null : (
           <>
             <DialogHeader>
-              <DialogTitle>{task.title}</DialogTitle>
+              <DialogTitle>{props.editing ? "Edit task" : task.title}</DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4 text-sm">
-              <div>
-                <p className="text-muted-foreground">Description</p>
-                <p className="mt-1 whitespace-pre-wrap border rounded-md border-muted-foreground px-2 py-1">
-                  {task.description?.trim() ? task.description : "—"}
-                </p>
+              <div className="flex justify-end gap-2">
+                {!props.editing ? (
+                  <Button variant="outline" size="sm" onClick={props.onStartEdit}>
+                    Edit
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="outline" size="sm" onClick={props.onCancelEdit}>
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={props.onSaveEdit}
+                      disabled={props.savingEdit || props.draftTitle.trim().length === 0}
+                    >
+                      {props.savingEdit ? "Saving…" : "Save"}
+                    </Button>
+                  </>
+                )}
               </div>
+
+              {!props.editing ? (
+                <div>
+                  <p className="text-muted-foreground">Description</p>
+                  <p className="mt-1 whitespace-pre-wrap border rounded-sm px-2 py-1">
+                    {task.description?.trim() ? task.description : "—"}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-muted-foreground">Title</p>
+                    <Input
+                      value={props.draftTitle}
+                      onChange={(e) => props.onDraftTitleChange(e.target.value)}
+                      placeholder="Task title"
+                      autoComplete="off"
+                    />
+                  </div>
+
+                  <div>
+                    <p className="text-muted-foreground">Description</p>
+                    <Textarea
+                      value={props.draftDescription}
+                      onChange={(e) => props.onDraftDescriptionChange(e.target.value)}
+                      placeholder="Description"
+                      rows={5}
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>

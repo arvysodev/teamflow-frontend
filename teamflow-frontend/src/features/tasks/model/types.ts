@@ -59,6 +59,16 @@ export type TaskDetailsDialogProps = {
   members: WorkspaceMember[]
   onOpenChange: (open: boolean) => void
 
+  editing: boolean
+  draftTitle: string
+  draftDescription: string
+  onDraftTitleChange: (value: string) => void
+  onDraftDescriptionChange: (value: string) => void
+  onStartEdit: () => void
+  onCancelEdit: () => void
+  onSaveEdit: () => void
+  savingEdit: boolean
+
   selectedStatus: TaskStatus
   onSelectedStatusChange: (status: TaskStatus) => void
   onSaveStatus: () => void
@@ -84,4 +94,12 @@ export type UnassignTaskParams = {
   workspaceId: string
   projectId: string
   taskId: string
+}
+
+export type UpdateTaskParams = {
+  workspaceId: string
+  projectId: string
+  taskId: string
+  title: string
+  description: string
 }

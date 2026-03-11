@@ -14,6 +14,7 @@ import { changeTaskStatus } from "@/features/tasks/api/changeTaskStatus"
 import { createTask } from "@/features/tasks/api/createTask"
 import { getTasks } from "@/features/tasks/api/getTasks"
 import { unassignTask } from "@/features/tasks/api/unassignTask"
+import { updateTask } from "@/features/tasks/api/updateTask"
 import { CreateTaskDialog } from "@/features/tasks/components/CreateTaskDialog"
 import { TaskColumn } from "@/features/tasks/components/TaskColumn"
 import { TaskDetailsDialog } from "@/features/tasks/components/TaskDetailsDialog"
@@ -33,6 +34,9 @@ export function ProjectPage() {
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false)
   const [selectedStatus, setSelectedStatus] = useState<TaskStatus>("TODO")
   const [selectedAssigneeId, setSelectedAssigneeId] = useState("")
+  const [isEditingTask, setIsEditingTask] = useState(false)
+  const [draftTaskTitle, setDraftTaskTitle] = useState("")
+  const [draftTaskDescription, setDraftTaskDescription] = useState("")
 
   const hasIds = Boolean(workspaceId && projectId)
 
@@ -174,6 +178,40 @@ export function ProjectPage() {
     },
   })
 
+  const updateTaskMutation = useMutation({
+    mutationFn: () =>
+      updateTask({
+        workspaceId: workspaceId!,
+        projectId: projectId!,
+        taskId: selectedTask!.id,
+        title: draftTaskTitle.trim(),
+        description: draftTaskDescription.trim(),
+      }),
+
+    onSuccess: async () => {
+      toast.success("Task updated")
+      await qc.invalidateQueries({ queryKey: ["tasks", workspaceId, projectId] })
+
+      setIsEditingTask(false)
+      setIsTaskDialogOpen(false)
+      setSelectedTask(null)
+      setDraftTaskTitle("")
+      setDraftTaskDescription("")
+    },
+
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        const problem = getProblemDetail(error.response?.data)
+        if (problem?.detail) {
+          toast.error("Update failed", { description: problem.detail })
+          return
+        }
+      }
+
+      toast.error("Update failed")
+    },
+  })
+
   const tasks = tasksQuery.data?.items ?? []
   const todoTasks = useMemo(() => tasks.filter((t) => t.status === "TODO"), [tasks])
   const inProgressTasks = useMemo(() => tasks.filter((t) => t.status === "IN_PROGRESS"), [tasks])
@@ -267,6 +305,9 @@ export function ProjectPage() {
             setSelectedTask(task)
             setSelectedStatus(task.status as TaskStatus)
             setSelectedAssigneeId(task.assigneeUserId ?? "")
+            setDraftTaskTitle(task.title)
+            setDraftTaskDescription(task.description ?? "")
+            setIsEditingTask(false)
             setIsTaskDialogOpen(true)
           }}
         />
@@ -278,6 +319,9 @@ export function ProjectPage() {
             setSelectedTask(task)
             setSelectedStatus(task.status as TaskStatus)
             setSelectedAssigneeId(task.assigneeUserId ?? "")
+            setDraftTaskTitle(task.title)
+            setDraftTaskDescription(task.description ?? "")
+            setIsEditingTask(false)
             setIsTaskDialogOpen(true)
           }}
         />
@@ -289,6 +333,9 @@ export function ProjectPage() {
             setSelectedTask(task)
             setSelectedStatus(task.status as TaskStatus)
             setSelectedAssigneeId(task.assigneeUserId ?? "")
+            setDraftTaskTitle(task.title)
+            setDraftTaskDescription(task.description ?? "")
+            setIsEditingTask(false)
             setIsTaskDialogOpen(true)
           }}
         />
@@ -300,12 +347,29 @@ export function ProjectPage() {
         members={membersQuery.data ?? []}
         onOpenChange={(open) => {
           setIsTaskDialogOpen(open)
+
           if (!open) {
             setSelectedTask(null)
             setSelectedAssigneeId("")
             setSelectedStatus("TODO")
+            setIsEditingTask(false)
+            setDraftTaskTitle("")
+            setDraftTaskDescription("")
           }
         }}
+        editing={isEditingTask}
+        draftTitle={draftTaskTitle}
+        draftDescription={draftTaskDescription}
+        onDraftTitleChange={setDraftTaskTitle}
+        onDraftDescriptionChange={setDraftTaskDescription}
+        onStartEdit={() => setIsEditingTask(true)}
+        onCancelEdit={() => {
+          setIsEditingTask(false)
+          setDraftTaskTitle(selectedTask?.title ?? "")
+          setDraftTaskDescription(selectedTask?.description ?? "")
+        }}
+        onSaveEdit={() => updateTaskMutation.mutate()}
+        savingEdit={updateTaskMutation.isPending}
         selectedStatus={selectedStatus}
         onSelectedStatusChange={setSelectedStatus}
         onSaveStatus={() => changeStatusMutation.mutate()}
