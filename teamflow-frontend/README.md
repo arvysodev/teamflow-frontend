@@ -1,73 +1,139 @@
-# React + TypeScript + Vite
+# Teamflow
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Teamflow is a small full-stack task management application designed as a portfolio project.  
+It demonstrates a typical modern web architecture with a Java Spring Boot backend and a React + TypeScript frontend.
 
-Currently, two official plugins are available:
+The application allows users to manage workspaces, collaborate on projects, and organize tasks using a simple kanban-style workflow.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Authentication
+- User registration
+- Email verification (demo: token logged by backend)
+- Login with JWT authentication
 
-## Expanding the ESLint configuration
+### Workspaces
+- Create workspaces
+- Rename / close / restore workspaces
+- Invite members via email token
+- Accept workspace invitations
+- View workspace members
+- Promote members to owner
+- Remove members
+- Leave workspace
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Projects
+- Create projects inside a workspace
+- Rename projects
+- Archive / restore projects
+- Search and sort projects
 
-```js
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
+### Tasks
+- Create tasks inside projects
+- Kanban-style board (Todo / In Progress / Done)
+- View task details
+- Edit task title and description
+- Change task status
+- Assign tasks to workspace members
+- Unassign tasks
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Tech Stack
+
+### Backend
+- **Java 21**
+- **Spring Boot 3**
+- **Spring Security**
+- **JWT authentication**
+- **PostgreSQL**
+- **Flyway** for database migrations
+- **JUnit + Mockito** for testing
+- **Gradle**
+
+### Frontend
+- **React**
+- **TypeScript**
+- **Vite**
+- **TanStack Query**
+- **React Router**
+- **shadcn/ui**
+- **TailwindCSS**
+
+---
+
+## Architecture
+
+The project follows a typical layered architecture.
+
+Backend:
+*Controller → Service → Repository → Database*
+
+Frontend:
+*API layer → React Query → UI components*
+
+**Key principles used:**
+- clear separation of concerns
+- typed API communication
+- server-side pagination, filtering and sorting
+- optimistic UI updates via query invalidation
+
+---
+
+## Demo Notes
+
+Some features are simplified because this is a portfolio project:
+
+- Email verification tokens are logged in the backend instead of being sent by email.
+- Access tokens are stored in `localStorage` for simplicity (production systems typically use httpOnly cookies).
+- Workspace member information currently exposes only user IDs.
+
+---
+
+## Running the Project
+
+### Backend
+
+Look how to run backend at https://github.com/arvysodev/teamflow-backend
+
+### Frontend
+
+Requirements:
+
+- Node.js 18+
+
+*Make sure that You run all the commands in the correct directory*
+
+Install dependencies
+
+```
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Start development server:
 
-```js
-// eslint.config.js
-import reactDom from "eslint-plugin-react-dom"
-import reactX from "eslint-plugin-react-x"
-
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs["recommended-typescript"],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
+npm run dev
+```
+
+Frontend will run at:
+
+```
+http://localhost:5173
+```
+
+---
+
+## What this project demonstrates
+
+The project is built to demonstrate:
+
+- full-stack application design
+- REST API design
+- authentication and authorization
+- relational data modeling
+- frontend state management with React Query
+- modular frontend architecture
+- integration between backend and frontend systems
