@@ -114,6 +114,13 @@ export function LoginPage() {
                   Register
                 </Link>
               </p>
+
+              <p className="text-sm text-muted-foreground">
+                Have verification token?{" "}
+                <Link className="underline" to="/verify">
+                  Verify Eemail
+                </Link>
+              </p>
             </form>
           </CardContent>
         </Card>
