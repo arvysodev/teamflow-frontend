@@ -1,3 +1,5 @@
+import type { WorkspaceMember } from "@/features/workspaces/model/types"
+
 export type TaskStatus = "TODO" | "IN_PROGRESS" | "DONE"
 
 export type Task = {
@@ -54,5 +56,32 @@ export type TaskCardProps = {
 export type TaskDetailsDialogProps = {
   open: boolean
   task: Task | null
+  members: WorkspaceMember[]
   onOpenChange: (open: boolean) => void
+
+  selectedStatus: TaskStatus
+  onSelectedStatusChange: (status: TaskStatus) => void
+  onSaveStatus: () => void
+  changingStatus: boolean
+
+  selectedAssigneeId: string
+  onSelectedAssigneeIdChange: (userId: string) => void
+  onAssign: () => void
+  assigning: boolean
+
+  onUnassign: () => void
+  unassigning: boolean
+}
+
+export type AssignTaskParams = {
+  workspaceId: string
+  projectId: string
+  taskId: string
+  userId: string
+}
+
+export type UnassignTaskParams = {
+  workspaceId: string
+  projectId: string
+  taskId: string
 }

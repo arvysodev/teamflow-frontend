@@ -9,15 +9,18 @@ import { Link, useParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getProjectById } from "@/features/projects/api/getProjectById"
+import { assignTask } from "@/features/tasks/api/assignTask"
 import { changeTaskStatus } from "@/features/tasks/api/changeTaskStatus"
 import { createTask } from "@/features/tasks/api/createTask"
 import { getTasks } from "@/features/tasks/api/getTasks"
+import { unassignTask } from "@/features/tasks/api/unassignTask"
 import { CreateTaskDialog } from "@/features/tasks/components/CreateTaskDialog"
 import { TaskColumn } from "@/features/tasks/components/TaskColumn"
+import { TaskDetailsDialog } from "@/features/tasks/components/TaskDetailsDialog"
 import type { Task, TaskStatus } from "@/features/tasks/model/types"
+import { getWorkspaceMembers } from "@/features/workspaces/api/getWorkspaceMembers"
 import { getProblemDetail } from "@/shared/api/problemDetails"
 import { formatDateTime } from "@/shared/lib/date"
-import { TaskDetailsDialog } from "@/features/tasks/components/TaskDetailsDialog"
 
 export function ProjectPage() {
   const { workspaceId, projectId } = useParams()
@@ -28,6 +31,8 @@ export function ProjectPage() {
   const [taskDescription, setTaskDescription] = useState("")
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false)
+  const [selectedStatus, setSelectedStatus] = useState<TaskStatus>("TODO")
+  const [selectedAssigneeId, setSelectedAssigneeId] = useState("")
 
   const hasIds = Boolean(workspaceId && projectId)
 
@@ -46,6 +51,12 @@ export function ProjectPage() {
         page: 0,
         size: 100,
       }),
+    enabled: hasIds,
+  })
+
+  const membersQuery = useQuery({
+    queryKey: ["workspaceMembers", workspaceId],
+    queryFn: () => getWorkspaceMembers(workspaceId!),
     enabled: hasIds,
   })
 
@@ -81,16 +92,19 @@ export function ProjectPage() {
   })
 
   const changeStatusMutation = useMutation({
-    mutationFn: ({ taskId, status }: { taskId: string; status: TaskStatus }) =>
+    mutationFn: () =>
       changeTaskStatus({
         workspaceId: workspaceId!,
         projectId: projectId!,
-        taskId,
-        status,
+        taskId: selectedTask!.id,
+        status: selectedStatus,
       }),
 
     onSuccess: async () => {
+      toast.success("Task status updated")
       await qc.invalidateQueries({ queryKey: ["tasks", workspaceId, projectId] })
+      setIsTaskDialogOpen(false)
+      setSelectedTask(null)
     },
 
     onError: (error) => {
@@ -101,8 +115,62 @@ export function ProjectPage() {
           return
         }
       }
-
       toast.error("Status change failed")
+    },
+  })
+
+  const assignMutation = useMutation({
+    mutationFn: () =>
+      assignTask({
+        workspaceId: workspaceId!,
+        projectId: projectId!,
+        taskId: selectedTask!.id,
+        userId: selectedAssigneeId,
+      }),
+
+    onSuccess: async () => {
+      toast.success("Task assigned")
+      await qc.invalidateQueries({ queryKey: ["tasks", workspaceId, projectId] })
+      setIsTaskDialogOpen(false)
+      setSelectedTask(null)
+    },
+
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        const problem = getProblemDetail(error.response?.data)
+        if (problem?.detail) {
+          toast.error("Assign failed", { description: problem.detail })
+          return
+        }
+      }
+      toast.error("Assign failed")
+    },
+  })
+
+  const unassignMutation = useMutation({
+    mutationFn: () =>
+      unassignTask({
+        workspaceId: workspaceId!,
+        projectId: projectId!,
+        taskId: selectedTask!.id,
+      }),
+
+    onSuccess: async () => {
+      toast.success("Task unassigned")
+      await qc.invalidateQueries({ queryKey: ["tasks", workspaceId, projectId] })
+      setIsTaskDialogOpen(false)
+      setSelectedTask(null)
+    },
+
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        const problem = getProblemDetail(error.response?.data)
+        if (problem?.detail) {
+          toast.error("Unassign failed", { description: problem.detail })
+          return
+        }
+      }
+      toast.error("Unassign failed")
     },
   })
 
@@ -115,20 +183,20 @@ export function ProjectPage() {
     return <p className="text-sm text-destructive">Project or workspace id is missing.</p>
   }
 
-  if (projectQuery.isPending) {
-    return <p className="text-sm text-muted-foreground">Loading project…</p>
+  if (projectQuery.isPending || tasksQuery.isPending || membersQuery.isPending) {
+    return <p className="text-sm text-muted-foreground">Loading…</p>
   }
 
   if (projectQuery.isError) {
     return <p className="text-sm text-destructive">Failed to load project.</p>
   }
 
-  if (tasksQuery.isPending) {
-    return <p className="text-sm text-muted-foreground">Loading tasks…</p>
-  }
-
   if (tasksQuery.isError) {
     return <p className="text-sm text-destructive">Failed to load tasks.</p>
+  }
+
+  if (membersQuery.isError) {
+    return <p className="text-sm text-destructive">Failed to load members.</p>
   }
 
   const project = projectQuery.data
@@ -197,6 +265,8 @@ export function ProjectPage() {
           tasks={todoTasks}
           onTaskClick={(task) => {
             setSelectedTask(task)
+            setSelectedStatus(task.status as TaskStatus)
+            setSelectedAssigneeId(task.assigneeUserId ?? "")
             setIsTaskDialogOpen(true)
           }}
         />
@@ -206,6 +276,8 @@ export function ProjectPage() {
           tasks={inProgressTasks}
           onTaskClick={(task) => {
             setSelectedTask(task)
+            setSelectedStatus(task.status as TaskStatus)
+            setSelectedAssigneeId(task.assigneeUserId ?? "")
             setIsTaskDialogOpen(true)
           }}
         />
@@ -215,6 +287,8 @@ export function ProjectPage() {
           tasks={doneTasks}
           onTaskClick={(task) => {
             setSelectedTask(task)
+            setSelectedStatus(task.status as TaskStatus)
+            setSelectedAssigneeId(task.assigneeUserId ?? "")
             setIsTaskDialogOpen(true)
           }}
         />
@@ -223,12 +297,25 @@ export function ProjectPage() {
       <TaskDetailsDialog
         open={isTaskDialogOpen}
         task={selectedTask}
+        members={membersQuery.data ?? []}
         onOpenChange={(open) => {
           setIsTaskDialogOpen(open)
           if (!open) {
             setSelectedTask(null)
+            setSelectedAssigneeId("")
+            setSelectedStatus("TODO")
           }
         }}
+        selectedStatus={selectedStatus}
+        onSelectedStatusChange={setSelectedStatus}
+        onSaveStatus={() => changeStatusMutation.mutate()}
+        changingStatus={changeStatusMutation.isPending}
+        selectedAssigneeId={selectedAssigneeId}
+        onSelectedAssigneeIdChange={setSelectedAssigneeId}
+        onAssign={() => assignMutation.mutate()}
+        assigning={assignMutation.isPending}
+        onUnassign={() => unassignMutation.mutate()}
+        unassigning={unassignMutation.isPending}
       />
     </div>
   )
